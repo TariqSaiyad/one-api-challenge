@@ -21,10 +21,7 @@ Agent.prototype.update = function (strokeWidth, noiseZVelocity, hit) {
 
   // color stuff
   let col = map(this.vector.y, 0, height, 250, 360);
-  stroke(chroma(col, 1, 0.6, "hsl").rgb(), agentAlpha);
-  if (hit) {
-    stroke(0);
-  }
+  !hit? stroke(chroma(col, 1, 0.6, "hsl").rgb(), agentAlpha):stroke(0);
   strokeWeight(strokeWidth * this.stepSize);
   line(this.vectorOld.x, this.vectorOld.y, this.vector.x, this.vector.y);
 
