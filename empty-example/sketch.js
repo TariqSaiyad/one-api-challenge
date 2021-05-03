@@ -29,7 +29,7 @@ let dialogs = [
   "Left.",
 ];
 
-const Vec = (x, y) => ({x,y}); // Simple vector object
+const Vec = (x, y) => ({ x, y }); // Simple vector object
 
 
 // function preload() {
@@ -52,10 +52,22 @@ const Vec = (x, y) => ({x,y}); // Simple vector object
 //     }
 //   );
 // }
-
+let encoder;
+let recording;
 function preload() {
   dialogs = dialogs.map((d) => d.trim());
   dialogs = dialogs.map((d) => d.toUpperCase());
+
+  HME.createH264MP4Encoder().then(enc => {
+    encoder = enc
+    encoder.outputFilename = 'test'
+    encoder.width = width
+    encoder.height = height
+    encoder.frameRate = 60
+    encoder.kbps = 50000 // video quality
+    encoder.groupOfPictures = 10 // lower if you have fast actions.
+    encoder.initialize()
+})
 }
 
 // text stuff
@@ -174,6 +186,10 @@ function draw() {
   //   noLoop();
   // }
 
+  if(recording){
+    encoder.addFrameRgba(drawingContext.getImageData(0, 0, encoder.width, encoder.height).data);
+  }
+
   if (showFPS) {
     doShowFPS();
   }
@@ -186,7 +202,21 @@ function draw() {
 
 function keyPressed() {
   if (keyCode == 32) {
-    clearBackground = true;
+    // clearBackground = true;
+    if(!recording){
+      recording=true;
+      return
+    }
+    recording = false
+    console.log('recording stopped')
+
+    encoder.finalize()
+    const uint8Array = encoder.FS.readFile(encoder.outputFilename);
+    const anchor = document.createElement('a')
+    anchor.href = URL.createObjectURL(new Blob([uint8Array], { type: 'video/mp4' }))
+    anchor.download = encoder.outputFilename
+    anchor.click()
+    encoder.delete()
   }
   // console.log(keyCode);
   if (keyCode === 67) {
