@@ -28,6 +28,10 @@ let dialogs = [
   "Yes.",
   "Left.",
 ];
+
+const Vec = (x, y) => ({x,y}); // Simple vector object
+
+
 // function preload() {
 //   let url =
 //     "https://the-one-api.dev/v2/character/5cd99d4bde30eff6ebccfea0/quote?limit=100";
@@ -70,7 +74,7 @@ var noiseStrength = 10;
 var noiseZRange = 0.4;
 var noiseZVelocity = 0.01;
 var overlayAlpha = 0.5;
-var strokeWidth = 0.3;
+var strokeWidth = 2;
 var drawMode = 1; // C to change
 
 // drawing

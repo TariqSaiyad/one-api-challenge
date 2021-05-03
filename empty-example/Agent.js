@@ -1,7 +1,7 @@
 var agentAlpha = 90;
 var Agent = function (noiseZRange) {
-  this.vector = createVector(random(width), random(height));
-  this.vectorOld = this.vector.copy();
+  this.vector = Vec(random(width), random(height));
+  this.vectorOld = Vec(this.vector.x,this.vector.y);
   this.stepSize = random(1, 5);
   this.angle;
   this.noiseZ = random(noiseZRange);
@@ -22,10 +22,11 @@ Agent.prototype.update = function (strokeWidth, noiseZVelocity, hit) {
   // color stuff
   let col = map(this.vector.y, 0, height, 250, 360);
   !hit? stroke(chroma(col, 1, 0.6, "hsl").rgb(), agentAlpha):stroke(0);
-  strokeWeight(strokeWidth * this.stepSize);
+  let strW = map(dist(this.vector.x, this.vector.y, width/2,height/2),0,dist(0,0,width/2,height/2), strokeWidth, noiseZVelocity*strokeWidth )
+  strokeWeight(strW);
   line(this.vectorOld.x, this.vectorOld.y, this.vector.x, this.vector.y);
 
-  this.vectorOld = this.vector.copy();
+  this.vectorOld = Vec(this.vector.x,this.vector.y);
 
   this.noiseZ += noiseZVelocity;
 };
