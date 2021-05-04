@@ -3,6 +3,10 @@
 "use strict";
 p5.disableFriendlyErrors = true; // disables FES
 
+// TODO: check this out later
+// https://github.com/TrevorSundberg/h264-mp4-encoder/issues/5
+// https://stackoverflow.com/questions/42437971/exporting-a-video-in-p5-js
+
 // TODO: remove later??
 // let dialogs = [];
 let dialogs = [
@@ -63,9 +67,9 @@ function preload() {
     encoder.outputFilename = 'test'
     encoder.width = width
     encoder.height = height
-    encoder.frameRate = 60
+    encoder.frameRate = 30
     encoder.kbps = 50000 // video quality
-    encoder.groupOfPictures = 10 // lower if you have fast actions.
+    // encoder.groupOfPictures = 10  // lower if you have fast actions.
     encoder.initialize()
 })
 }
@@ -97,7 +101,7 @@ function setup() {
   createCanvas(windowWidth, windowHeight, P2D);
   background(255);
   noStroke(); // noFill();
-  frameRate(60);
+  frameRate(30);
   opentype.load("data/FreeSansNoPunch.otf", function (err, f) {
     if (err) {
       console.log(err);
