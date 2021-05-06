@@ -1,5 +1,4 @@
 /// <reference path="../TSDef/p5.global-mode.d.ts" />
-
 "use strict";
 p5.disableFriendlyErrors = true; // disables FES
 
@@ -35,7 +34,6 @@ let dialogs = [
 
 const Vec = (x, y) => ({ x, y }); // Simple vector object
 
-
 // function preload() {
 //   let url =
 //     "https://the-one-api.dev/v2/character/5cd99d4bde30eff6ebccfea0/quote?limit=100";
@@ -58,20 +56,18 @@ const Vec = (x, y) => ({ x, y }); // Simple vector object
 // }
 let encoder;
 let recording;
+
+var capturer;
+
 function preload() {
   dialogs = dialogs.map((d) => d.trim());
   dialogs = dialogs.map((d) => d.toUpperCase());
 
-  HME.createH264MP4Encoder().then(enc => {
-    encoder = enc
-    encoder.outputFilename = 'test'
-    encoder.width = width
-    encoder.height = height
-    encoder.frameRate = 30
-    encoder.kbps = 50000 // video quality
-    // encoder.groupOfPictures = 10  // lower if you have fast actions.
-    encoder.initialize()
-})
+  capturer = new CCapture({
+    format: "webm",
+    framerate: 60,
+    verbose: true,
+  });
 }
 
 // text stuff
@@ -101,7 +97,7 @@ function setup() {
   createCanvas(windowWidth, windowHeight, P2D);
   background(255);
   noStroke(); // noFill();
-  frameRate(30);
+  frameRate(60);
   opentype.load("data/FreeSansNoPunch.otf", function (err, f) {
     if (err) {
       console.log(err);
@@ -190,8 +186,8 @@ function draw() {
   //   noLoop();
   // }
 
-  if(recording){
-    encoder.addFrameRgba(drawingContext.getImageData(0, 0, encoder.width, encoder.height).data);
+  if (recording) {
+    capturer.capture(canvas);
   }
 
   if (showFPS) {
@@ -207,22 +203,18 @@ function draw() {
 function keyPressed() {
   if (keyCode == 32) {
     // clearBackground = true;
-    if(!recording){
-      recording=true;
-      return
+    if (!recording) {
+      capturer.start();
+      recording = true;
+      return;
     }
-    recording = false
-    console.log('recording stopped')
 
-    encoder.finalize()
-    const uint8Array = encoder.FS.readFile(encoder.outputFilename);
-    const anchor = document.createElement('a')
-    anchor.href = URL.createObjectURL(new Blob([uint8Array], { type: 'video/mp4' }))
-    anchor.download = encoder.outputFilename
-    anchor.click()
-    encoder.delete()
+    recording = false;
+    console.log("recording stopped");
+    capturer.stop();
+    // default save, will download automatically a file called {name}.extension (webm/gif/tar)
+    capturer.save();
   }
-  // console.log(keyCode);
   if (keyCode === 67) {
     drawMode = drawMode == 1 ? 2 : 1;
   }
