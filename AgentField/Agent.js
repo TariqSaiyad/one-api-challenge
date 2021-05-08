@@ -7,9 +7,8 @@ var Agent = function (noiseZRange) {
   this.noiseZ = random(noiseZRange);
 };
 
-Agent.prototype.update = function (strokeWidth, noiseZVelocity, hit) {
+Agent.prototype.update = function (strokeWidth, noiseZVelocity, hit, mode) {
  
-
   this.vector.x += cos(this.angle) * this.stepSize;
   this.vector.y += sin(this.angle) * this.stepSize;
 
@@ -20,7 +19,13 @@ Agent.prototype.update = function (strokeWidth, noiseZVelocity, hit) {
   if (this.vector.y > height + 10) this.vector.y = this.vectorOld.y = -10;
 
   // color stuff
-  let col = map(this.vector.y, 0, height, 250, 360);
+  let col;
+  if(mode){
+  col = map(this.vector.y *this.vector.x, 0, height*width, 150, 260);
+  }else{
+  col = map(this.vector.y *this.vector.x, 0, height*width, 300, 200);
+  }
+
   !hit? stroke(chroma(col, 1, 0.6, "hsl").rgb(), agentAlpha):stroke(0);
   let strW = map(dist(this.vector.x, this.vector.y, width/2,height/2),0,dist(0,0,width/2,height/2), strokeWidth, noiseZVelocity*strokeWidth )
   strokeWeight(strW);
@@ -42,7 +47,7 @@ Agent.prototype.update1 = function (
     noise(this.vector.x / noiseScale, this.vector.y / noiseScale, this.noiseZ) *
     noiseStrength;
 
-  this.update(strokeWidth, noiseZVelocity, hit);
+  this.update(strokeWidth, noiseZVelocity, hit, true);
 };
 
 Agent.prototype.update2 = function (
@@ -57,5 +62,5 @@ Agent.prototype.update2 = function (
     24;
   this.angle = (this.angle - floor(this.angle)) * noiseStrength;
 
-  this.update(strokeWidth, noiseZVelocity, hit);
+  this.update(strokeWidth, noiseZVelocity, hit,false);
 };

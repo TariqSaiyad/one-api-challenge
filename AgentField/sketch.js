@@ -6,30 +6,25 @@ p5.disableFriendlyErrors = true; // disables FES
 // https://github.com/TrevorSundberg/h264-mp4-encoder/issues/5
 // https://stackoverflow.com/questions/42437971/exporting-a-video-in-p5-js
 
-// TODO: remove later??
-// let dialogs = [];
 let dialogs = [
-  '"Hobbits!"',
-  "No.  No it isn't.",
-  "Up! Quickly!",
-  "Silence!",
-  "Stay this madness!",
-  "Back to the gate! Hurry!",
-  "Bring them down!",
-  "Foreseen and done nothing!",
-  "Where?  When?",
-  "Helm's Dee",
-  "You shall not pass!",
-  "You cannot pass!",
-  "Steady! Steady!",
-  "    Volley! , Fire!  ",
-  "Fly, you fools! ",
-  "Amon D'n.",
-  "Hope is kindled!",
-  "I've sent him to his death.",
-  "Thank you.",
+  // 'Hobbits!',
+  // "No. No it isn't.",
+  // "Up! Quickly!",
+  // "Silence!",
+  // "Stay this madness!",
+  // "Back to the gate! Hurry!",
+  // "Bring them down!",
+  // // "Foreseen and done nothing!",
+  // "Where? When?",
+  // "Helm's Deep",
+  // "You shall not pass!",
+  // // "Steady! Steady!",
+  // "Volley!, Fire!  ",
+  // "Fly, you fools! ",
+  // "Hope is kindled!",
+  // "I've sent him to his death.",
+  // // "Thank you.",
   "Yes.",
-  "Left.",
 ];
 
 const Vec = (x, y) => ({ x, y }); // Simple vector object
@@ -58,11 +53,12 @@ let encoder;
 let recording;
 
 var capturer;
-
+var recorder;
+var chunks = [];
 function preload() {
   dialogs = dialogs.map((d) => d.trim());
   dialogs = dialogs.map((d) => d.toUpperCase());
-
+  dialogs = dialogs.map((d) => "\"" + d.toUpperCase()+ "\"");
   capturer = new CCapture({
     format: "webm",
     framerate: 60,
@@ -81,21 +77,22 @@ let padding = 20;
 // render stuff
 var agents = [];
 var agentCount = 1000;
-var noiseScale = 100;
-var noiseStrength = 10;
+var noiseScale = 1000;
+var noiseStrength = 100;
 var noiseZRange = 0.4;
 var noiseZVelocity = 0.01;
 var overlayAlpha = 0.5;
 var strokeWidth = 2;
 var drawMode = 1; // C to change
+var backCol = 255;
 
 // drawing
 var clearBackground = false;
 var showFPS = true;
-var pdf;
+var stopped = false;
 function setup() {
   createCanvas(windowWidth, windowHeight, P2D);
-  background(255);
+  background(backCol);
   noStroke(); // noFill();
   frameRate(60);
   opentype.load("data/FreeSansNoPunch.otf", function (err, f) {
@@ -106,8 +103,10 @@ function setup() {
       // get a path from OpenType.js
       let totalW = 0;
       let totalH = 0;
-      for (let i = 0; i < dialogs[0].length; i++) {
-        var fontPath = font.getPath(dialogs[0][i]);
+      let rand = random(dialogs.length-1).toFixed();
+      let selectedText= dialogs[rand]
+      for (let i = 0; i < selectedText.length; i++) {
+        var fontPath = font.getPath(selectedText[i]);
         path = new g.Path(fontPath.commands);
         totalW += path.bounds().width + 10;
         if (path.bounds().height > totalH) {
@@ -118,8 +117,8 @@ function setup() {
       let charW = (width - totalW) / 2;
       let charH = (height - totalH) / 2;
 
-      for (let i = 0; i < dialogs[0].length; i++) {
-        var fontPath = font.getPath(dialogs[0][i]);
+      for (let i = 0; i < selectedText.length; i++) {
+        var fontPath = font.getPath(selectedText[i]);
         // convert it to a g.Path object
         path = new g.Path(fontPath.commands);
         // resample it with equidistant points
@@ -141,7 +140,7 @@ function setup() {
         totalH + padding,
       ];
 
-      loop();
+      noLoop();
     }
   });
 
@@ -149,6 +148,8 @@ function setup() {
   for (var i = 0; i < agentCount; i++) {
     agents[i] = new Agent(noiseZRange);
   }
+
+  // record();
 }
 
 function draw() {
@@ -156,7 +157,7 @@ function draw() {
   if (!font) return;
   // translate(20, 220);
   // FLOW FIELD
-  fill(255, overlayAlpha);
+  fill(backCol, overlayAlpha);
   noStroke();
   rect(0, 0, width, height);
 
@@ -181,10 +182,6 @@ function draw() {
   // fill(hit ? color("red") : 0);
   // noLoop();
   // loop();
-  // if (frameCount >= 600) {
-  //   save(frameCount + ".svg");
-  //   noLoop();
-  // }
 
   if (recording) {
     capturer.capture(canvas);
@@ -195,26 +192,37 @@ function draw() {
   }
 
   if (clearBackground) {
-    background(255);
+    background(backCol);
     clearBackground = false;
   }
 }
 
 function keyPressed() {
-  if (keyCode == 32) {
-    // clearBackground = true;
+  // R - record (start-stop)
+  if (keyCode === 82) {
     if (!recording) {
       capturer.start();
       recording = true;
       return;
     }
-
     recording = false;
     console.log("recording stopped");
     capturer.stop();
-    // default save, will download automatically a file called {name}.extension (webm/gif/tar)
     capturer.save();
   }
+  // S - stop/play
+  if (keyCode === 83) {
+    stopped ? loop() : noLoop();
+    stopped = !stopped;
+  }
+
+  // spacebar - clear screen
+  if (keyCode == 32) {
+    loop()
+    clearBackground=!clearBackground;
+  }
+
+  // c - change render noise 
   if (keyCode === 67) {
     drawMode = drawMode == 1 ? 2 : 1;
   }
@@ -269,4 +277,27 @@ function doShowFPS() {
   fill(255);
   stroke(0);
   text(fps.toFixed(0), 10, height - 10);
+}
+
+function record() {
+  chunks.length = 0;
+  let stream = document.querySelector("canvas").captureStream(60);
+
+  recorder = new MediaRecorder(stream);
+  recorder.ondataavailable = (e) => {
+    if (e.data.size) {
+      chunks.push(e.data);
+    }
+  };
+  recorder.onstop = exportVideo;
+}
+
+function exportVideo(e) {
+  var blob = new Blob(chunks);
+  var vid = document.createElement("video");
+  vid.id = "recorded";
+  vid.controls = true;
+  vid.src = URL.createObjectURL(blob);
+  document.body.appendChild(vid);
+  vid.play();
 }
