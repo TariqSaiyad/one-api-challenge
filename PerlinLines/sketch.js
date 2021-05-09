@@ -63,7 +63,7 @@ let padding = 20;
 
 // drawing
 var backCol = 30;
-var fr = 60;
+var fr = 30;
 var clearBackground = false;
 var showFPS = true;
 var stopped = false;
@@ -79,8 +79,9 @@ function preload() {
   dialogs = dialogs.map((d) => d.toUpperCase());
   dialogs = dialogs.map((d) => '"' + d.toUpperCase() + '"');
   capturer = new CCapture({
-    format: "webm",
-    framerate: fr,
+    format: "png",
+    name:'frames',
+    // framerate: fr,
     verbose: true,
   });
 
@@ -140,7 +141,7 @@ function setup() {
 
   createCanvas(windowWidth, windowHeight);
   background(backCol);
-  frameRate(fr);
+  // frameRate(fr);
   cursor(CROSS);
   strokeWeight(0.75);
   noLoop();

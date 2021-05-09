@@ -66,8 +66,9 @@ var chunks = [];
 function preload() {
 
   capturer = new CCapture({
-    format: "webm",
-    framerate: 60,
+    format: "png",
+    name:"frames",
+    // framerate: 60,
     verbose: true,
   });
 
@@ -82,7 +83,7 @@ function setup() {
   xoff = width;
   yoff = 0;
   createLetters();
-  // noLoop();
+  noLoop();
 
 }
 

@@ -17,14 +17,14 @@ let dialogs = [
   // // "Foreseen and done nothing!",
   // "Where? When?",
   // "Helm's Deep",
-  // "You shall not pass!",
+  "You shall not pass!",
   // // "Steady! Steady!",
   // "Volley!, Fire!  ",
   // "Fly, you fools! ",
   // "Hope is kindled!",
   // "I've sent him to his death.",
   // // "Thank you.",
-  "Yes.",
+  // "Yes.",
 ];
 
 const Vec = (x, y) => ({ x, y }); // Simple vector object
@@ -60,8 +60,9 @@ function preload() {
   dialogs = dialogs.map((d) => d.toUpperCase());
   dialogs = dialogs.map((d) => "\"" + d.toUpperCase()+ "\"");
   capturer = new CCapture({
-    format: "webm",
-    framerate: 60,
+    format: "png",
+    name:"frames",
+    // framerate: 60,
     verbose: true,
   });
 }
@@ -76,13 +77,13 @@ let padding = 20;
 
 // render stuff
 var agents = [];
-var agentCount = 1000;
-var noiseScale = 1000;
-var noiseStrength = 100;
+var agentCount = 1500;
+var noiseScale = 1000   ;
+var noiseStrength = 10;
 var noiseZRange = 0.4;
 var noiseZVelocity = 0.01;
-var overlayAlpha = 0.5;
-var strokeWidth = 2;
+var overlayAlpha = 0;
+var strokeWidth = 1.5;
 var drawMode = 1; // C to change
 var backCol = 255;
 
@@ -94,7 +95,7 @@ function setup() {
   createCanvas(windowWidth, windowHeight, P2D);
   background(backCol);
   noStroke(); // noFill();
-  frameRate(60);
+  // frameRate(24);
   opentype.load("data/FreeSansNoPunch.otf", function (err, f) {
     if (err) {
       console.log(err);

@@ -21,9 +21,9 @@ Agent.prototype.update = function (strokeWidth, noiseZVelocity, hit, mode) {
   // color stuff
   let col;
   if(mode){
-  col = map(this.vector.y *this.vector.x, 0, height*width, 150, 260);
+  col = map(this.vector.y *this.vector.x, 0, height*width, 0, 90);
   }else{
-  col = map(this.vector.y *this.vector.x, 0, height*width, 300, 200);
+  col = map(this.vector.y *this.vector.x, 0, height*width, 360, 240);
   }
 
   !hit? stroke(chroma(col, 1, 0.6, "hsl").rgb(), agentAlpha):stroke(0);
