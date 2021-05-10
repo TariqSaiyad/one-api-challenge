@@ -208,7 +208,7 @@ function keyPressed() {
     capturer.save();
   }
   // S - stop/play
-  if (keyCode === 83) {
+  if (key === ' ') {
     stopped ? loop() : noLoop();
     stopped = !stopped;
   }

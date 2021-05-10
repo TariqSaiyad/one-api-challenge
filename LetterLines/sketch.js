@@ -187,6 +187,9 @@ function keyReleased() {
 }
 
 function keyPressed() {
+  if(key===' '){
+    loop()
+  }
 
   if (keyCode === 82) {
     if (!recording) {
