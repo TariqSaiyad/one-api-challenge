@@ -60,7 +60,7 @@ function preload() {
   //     console.log(allDialog);
   //   }
   // );
-  img = loadImage('data/img_1_50.png');
+  img = loadImage('data/gandalf.jpg');
 }
 
 function setup() {
@@ -76,18 +76,17 @@ function setup() {
 var x = 0;
 var y = 10;
 var counter = 0;
-var speed = 50;
+var speed =1;
 function draw() {
-  //  background(255);
 
-
-  //  while (y < height) {
   // translate position (display) to position (image)
+  // draw multiple characters every frame.
   for (let index = 0; index < speed; index++) {
     // get current color
     var imgX = round(map(x, 0, width, 0, img.width));
     var imgY = round(map(y, 0, height, 0, img.height));
     var c = color(img.get(imgX, imgY));
+    // get grayscale color
     var greyscale = round(red(c) * 0.222 + green(c) * 0.707 + blue(c) * 0.071);
 
     push();
@@ -101,7 +100,7 @@ function draw() {
         fill(c);
       }
     } else {
-      // greyscale to fontsize
+      // greyscale maps to fontsize
       var fontSize = map(greyscale, 0, 255, fontSizeMax, fontSizeMin);
       fontSize = max(fontSize, 1);
       textSize(fontSize);
@@ -112,6 +111,7 @@ function draw() {
       }
     }
 
+    // draw the character at the counter index
     var letter = inputText.charAt(counter);
     text(letter, 0, 0);
     var letterWidth = textWidth(letter) + kerning;
@@ -120,25 +120,23 @@ function draw() {
 
     pop();
 
-    // linebreaks
+    // linebreaks when x overflows
     if (x + letterWidth >= width) {
       x = 0;
       y += spacing;
     }
-
     counter++;
+    // reset counter if end of string reached
     if (counter >= inputText.length) {
       counter = 0;
     }
-
+    // stop animation when drawing is at the bottom of screen
     if (y >= height) {
       noLoop();
     }
-    
-
   }
-  speed += 10;
-  //  }
+  // slowly ramp up drawing speed
+  speed += 1;
 }
 
 function keyReleased() {
