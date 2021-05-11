@@ -2,25 +2,6 @@
 "use strict";
 p5.disableFriendlyErrors = true; // disables FES
 
-/**
- * draw tool. draw with a rotating element (svg file).
- *
- * MOUSE
- * drag                : draw
- *
- * KEYS
- * 1-4                 : switch default colors
- * 5-9                 : switch brush element
- * delete/backspace    : clear screen
- * d                   : reverse direction and mirrow angle
- * space               : new random color
- * arrow left          : rotaion speed -
- * arrow right         : rotaion speed +
- * arrow up            : module size +
- * arrow down          : module size -
- * shift               : limit drawing direction
- * s                   : save png
- */
 ("use strict");
 
 let dialogs = [
@@ -80,7 +61,7 @@ function preload() {
   dialogs = dialogs.map((d) => '"' + d.toUpperCase() + '"');
   capturer = new CCapture({
     format: "png",
-    name:'frames',
+    name: "frames",
     // framerate: fr,
     verbose: true,
   });
@@ -141,35 +122,34 @@ function setup() {
 
   createCanvas(windowWidth, windowHeight);
   background(backCol);
-  // frameRate(fr);
-  cursor(CROSS);
   strokeWeight(0.75);
   noLoop();
 }
 
 function draw() {
-  // remember click position
+  // get x,y coords from perlin noise
   var x = noise(xoff) * width;
   var y = noise(yoff) * height;
   lineModuleSize = y / 2;
+
+  // start drawing line.
   push();
+  // move to x,y position and rotate by some angle
   translate(x, y);
   rotate(radians(angle));
+  // get color from x,y position
   c = chroma(map(x * y, 0, width * height, 0, 360), 1, 0.6, "hsl").rgb();
-  if (lineModuleIndex != 0) {
-    tint(c);
-    image(lineModule[lineModuleIndex], 0, 0, lineModuleSize, lineModuleSize);
-  } else {
-    stroke(c);
-    line(0, 0, lineModuleSize, lineModuleSize);
-  }
-  angle += angleSpeed;
+  stroke(c);
+  // draw line here
+  line(0, 0, lineModuleSize, lineModuleSize);
   pop();
 
+  // update variables
+  angle += angleSpeed;
   xoff += 0.005;
   yoff += 0.007;
 
-  // draw "invisible" text
+  // draw "invisible" text at the end of every frame
   fill(backCol);
   noStroke();
   for (let i = 0; i < polys.length; i++) {
@@ -188,11 +168,6 @@ function draw() {
   }
 }
 
-function mousePressed() {
-  // create a new random color and line length
-  lineModuleSize = random(50, 160);
-}
-
 function keyPressed() {
   if (keyCode === 82) {
     if (!recording) {
@@ -207,34 +182,11 @@ function keyPressed() {
     // default save, will download automatically a file called {name}.extension (webm/gif/tar)
     capturer.save();
   }
-  // S - stop/play
-  if (key === ' ') {
+  // Space - stop/play
+  if (key === " ") {
     stopped ? loop() : noLoop();
     stopped = !stopped;
   }
-
-  if (keyCode == UP_ARROW) lineModuleSize += 5;
-  if (keyCode == DOWN_ARROW) lineModuleSize -= 5;
-  if (keyCode == LEFT_ARROW) angleSpeed -= 0.5;
-  if (keyCode == RIGHT_ARROW) angleSpeed += 0.5;
-}
-
-function keyReleased() {
-  if (key == "s" || key == "S") saveCanvas(gd.timestamp(), "png");
-  if (keyCode == DELETE || keyCode == BACKSPACE) background(255);
-
-  // reverse direction and mirror angle
-  if (key == "d" || key == "D") {
-    angle += 180;
-    angleSpeed *= -1;
-  }
-
-  // load svg for line module
-  if (key == "5") lineModuleIndex = 0;
-  if (key == "6") lineModuleIndex = 1;
-  if (key == "7") lineModuleIndex = 2;
-  if (key == "8") lineModuleIndex = 3;
-  if (key == "9") lineModuleIndex = 4;
 }
 
 function doShowFPS() {
