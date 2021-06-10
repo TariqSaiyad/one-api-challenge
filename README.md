@@ -1,5 +1,5 @@
 
-## Dev Challenge - One API 
+## Dev Challenge - The One API 
 ### Tariq Saiyad
 
 Various visualisations created using [The One API](https://the-one-api.dev/)
