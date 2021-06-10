@@ -2,33 +2,32 @@
 "use strict";
 p5.disableFriendlyErrors = true; // disables FES
 
-// TODO: find a way to export as video
-
+// TODO: check this out later
 // https://github.com/TrevorSundberg/h264-mp4-encoder/issues/5
 // https://stackoverflow.com/questions/42437971/exporting-a-video-in-p5-js
 
-const Vec = (x, y) => ({ x, y }); // Simple vector object
-
 let dialogs = [
-  // 'Hobbits!',
+  "Hobbits!",
   // "No. No it isn't.",
   // "Up! Quickly!",
   // "Silence!",
   // "Stay this madness!",
   // "Back to the gate! Hurry!",
   // "Bring them down!",
-  // // "Foreseen and done nothing!",
+  // "Foreseen and done nothing!",
   // "Where? When?",
   // "Helm's Deep",
-  "You shall not pass!",
-  // // "Steady! Steady!",
+  // "You shall not pass!",
+  // "Steady! Steady!",
   // "Volley!, Fire!  ",
   // "Fly, you fools! ",
   // "Hope is kindled!",
   // "I've sent him to his death.",
-  // // "Thank you.",
+  // "Thank you.",
   // "Yes.",
 ];
+
+const Vec = (x, y) => ({ x, y }); // Simple vector object
 
 // function preload() {
 //   let url =
@@ -51,63 +50,50 @@ let dialogs = [
 //   );
 // }
 
-function preload() {
-  // deal with strings here
-  dialogs = dialogs.map((d) => d.trim());
-  dialogs = dialogs.map((d) => d.toUpperCase());
-  dialogs = dialogs.map((d) => '"' + d.toUpperCase() + '"');
-
-  // create capture object for exporting frames
-  capturer = new CCapture({
-    format: "png",
-    name: "frames",
-    // framerate: 60,
-  });
-}
-
 // text stuff
-var time = 0;
-var font;
-var path;
-var polys = [];
-var textRect = [];
-var padding = 20;
+let font;
+let path;
+let polys = [];
+let textRect = [];
+let padding = 20;
 
 // render stuff
-var agents = [];
-var agentCount = 1500;
-var noiseScale = 1000;
-var noiseStrength = 10;
-var noiseZRange = 0.4;
-var noiseZVelocity = 0.01;
-var overlayAlpha = 0;
-var strokeWidth = 1.5;
-var drawMode = 1; // C to change
-var backCol = 255;
+let grid;
+let cols;
+let rows;
+let resolution = 10;
 
 // drawing
+var backCol = 255;
+var fr = 10;
 var clearBackground = false;
 var showFPS = true;
 var stopped = false;
-var recording;
+
+let recording;
+
 var capturer;
+var recorder;
+var chunks = [];
 
-function setup() {
-  createCanvas(windowWidth, windowHeight, P2D);
-  background(backCol);
-  noStroke(); // noFill();
-  // frameRate(24);
+function preload() {
+  dialogs = dialogs.map((d) => d.trim());
+  dialogs = dialogs.map((d) => d.toUpperCase());
+  dialogs = dialogs.map((d) => '"' + d.toUpperCase() + '"');
+  capturer = new CCapture({
+    format: "webm",
+    framerate: fr,
+  });
 
-  // load font data and extract font path vectors
   opentype.load("data/FreeSansNoPunch.otf", function (err, f) {
     if (err) {
       console.log(err);
     } else {
       font = f;
-      // calculate total text width so far
+      // get a path from OpenType.js
       let totalW = 0;
       let totalH = 0;
-      let rand = random(dialogs.length - 1).toFixed();
+      let rand = floor(random(dialogs.length - 1));
       let selectedText = dialogs[rand];
       for (let i = 0; i < selectedText.length; i++) {
         var fontPath = font.getPath(selectedText[i]);
@@ -118,65 +104,130 @@ function setup() {
         }
       }
 
-      // get text dimensions.
       let charW = (width - totalW) / 2;
       let charH = (height - totalH) / 2;
 
-      // get path for each character.
       for (let i = 0; i < selectedText.length; i++) {
         var fontPath = font.getPath(selectedText[i]);
         // convert it to a g.Path object
         path = new g.Path(fontPath.commands);
         // resample it with equidistant points
         path = g.resampleByLength(path, 1);
+
         let poly = [];
-        // create array of points for this character.
         for (var j = 0; j < path.commands.length; j++) {
           var pnt = path.commands[j];
           poly[j] = createVector(pnt.x + charW, pnt.y + charH);
         }
         charW += path.bounds().width + 10;
-        // push to array for each character
         polys.push(poly.filter((v) => v.x > 0 && v.y > 0));
       }
-
-      // bounding box for text
       textRect = [
         charW - totalW - padding / 2,
         charH - totalH - padding / 2,
         totalW + padding,
         totalH + padding,
       ];
-
-      // noLoop();
     }
   });
+}
 
-  // FLOW FIELD agents
-  for (var i = 0; i < agentCount; i++) {
-    agents[i] = new Agent(noiseZRange);
+
+function setup() {
+  createCanvas(windowWidth, windowHeight, P2D);
+  cols = floor(width / resolution);
+  rows = floor(height / resolution);
+  console.log(cols, rows);
+  grid = make2DArray(cols, rows);
+  // for (let i = 0; i < cols; i++) {
+  //   for (let j = 0; j < rows; j++) {
+  //     grid[i][j] = floor(random(2));
+  //     // for (let k = 0; k < polys.length; k++) {
+  //     //   const poly = polys[k];
+  //     //   if (inside([i, j], poly)) {
+  //     //     grid[i][j] = 1;
+  //     //     return;
+  //     //   } else {
+  //     //     grid[i][j] = 0;
+  //     //   }
+  //     // }
+  //   }
+  // }
+  let fontCols = floor(textRect[2] / resolution);
+  let fontRows = floor(textRect[3] / resolution);
+  for (let i = 0; i < cols; i++) {
+    for (let j = 0; j < rows; j++) {
+      grid[i][j] = floor(random(2));
+      // for (let k = 0; k < polys.length; k++) {
+      //   const poly = polys[k];
+      //   if (inside([i, j], poly)) {
+      //     grid[i][j] = 1;
+      //     return;
+      //   } else {
+      //     grid[i][j] = 0;
+      //   }
+      // }
+    }
   }
+
+  background(backCol);
+  frameRate(fr);
 }
 
 function draw() {
   if (!font) return;
-  fill(backCol, overlayAlpha);
-  noStroke();
-  rect(0, 0, width, height);
 
-  // Draw agents
-  doVis1();
+  background(backCol);
+
+  for (let i = 0; i < cols; i++) {
+    for (let j = 0; j < rows; j++) {
+      let x = i * resolution;
+      let y = j * resolution;
+      if (grid[i][j] > 0) {
+        fill(0);
+        stroke(255);
+        rect(x, y, resolution - 1, resolution - 1);
+      }
+    }
+  }
+
+  let next = make2DArray(cols, rows);
+
+  // Compute next based on grid
+  for (let i = 0; i < cols; i++) {
+    for (let j = 0; j < rows; j++) {
+      let state = grid[i][j];
+      // Count live neighbors!
+      let sum = 0;
+      let neighbors = countNeighbors(grid, i, j);
+
+      if (state == 0 && neighbors == 3) {
+        next[i][j] = 1;
+      } else if (state == 1 && (neighbors < 2 || neighbors > 3)) {
+        next[i][j] = 0;
+      } else {
+        next[i][j] = state;
+      }
+    }
+  }
+
+  grid = next;
 
   // fill(255, 255, 255, 0.1);
   // stroke(255);
 
   // background(55);
-  // for (let i = 0; i < polys.length; i++) {
-  //   const poly = polys[i];
-  //   beginShape();
-  //   for (const { x, y } of poly) vertex(x, y);
-  //   endShape(CLOSE);
-  // }
+  for (let i = 0; i < polys.length; i++) {
+    const poly = polys[i];
+    beginShape();
+    inside([mouseX, mouseY], poly) ? fill(0, 225, 0) : fill(0);
+    for (const { x, y } of poly) {
+      vertex(x, y);
+    }
+    endShape(CLOSE);
+  }
+  // stroke(255);
+
   // circle(mouseX, mouseY, 10); // put a small ellipse on our point.
 
   // let hit = collidePointPoly(mouseX, mouseY, polys[0]);
@@ -192,11 +243,23 @@ function draw() {
   if (showFPS) {
     doShowFPS();
   }
+
+  if (clearBackground) {
+    background(backCol);
+    clearBackground = false;
+  }
 }
 
 function keyPressed() {
   // R - record (start-stop)
   if (keyCode === 82) {
+    // if (!recording) {
+    //   recorder.start();
+    //   recording = true;
+    //   return;
+    // }
+    // recorder.stop();
+    // recording = false;
     if (!recording) {
       capturer.start();
       recording = true;
@@ -205,6 +268,7 @@ function keyPressed() {
     recording = false;
     console.log("recording stopped");
     capturer.stop();
+    // default save, will download automatically a file called {name}.extension (webm/gif/tar)
     capturer.save();
   }
   // S - stop/play
@@ -215,7 +279,7 @@ function keyPressed() {
 
   // spacebar - clear screen
   if (keyCode == 32) {
-    background(backCol);
+    clearBackground = !clearBackground;
   }
 
   // c - change render noise
@@ -224,50 +288,46 @@ function keyPressed() {
   }
 }
 
-function doVis1() {
-  // for each agent, 
-  for (var i = 0; i < agentCount; i++) {
-    let hit;
-    // check if its within the bounding box of the text.
-    let withinBounds = collidePointRect(
-      agents[i].vector.x,
-      agents[i].vector.y,
-      textRect[0],
-      textRect[1],
-      textRect[2],
-      textRect[3]
-    );
+function make2DArray(cols, rows) {
+  let arr = new Array(cols);
+  for (let i = 0; i < arr.length; i++) {
+    arr[i] = new Array(rows);
+  }
+  return arr;
+}
 
-    // if so, check if it hits any point of the text's character path. 
-    if (withinBounds) {
-      for (let j = 0; j < polys.length; j++) {
-        const poly = polys[j];
-        if (collidePointPoly(agents[i].vector.x, agents[i].vector.y, poly)) {
-          hit = true;
-          break;
-        }
-      }
-    }
-
-    // update the particle agent with noise parameters
-    if (drawMode == 1) {
-      agents[i].update1(
-        strokeWidth,
-        noiseScale,
-        noiseStrength,
-        noiseZVelocity,
-        hit
-      );
-    } else {
-      agents[i].update2(
-        strokeWidth,
-        noiseScale,
-        noiseStrength,
-        noiseZVelocity,
-        hit
-      );
+function countNeighbors(grid, x, y) {
+  let sum = 0;
+  for (let i = -1; i < 2; i++) {
+    for (let j = -1; j < 2; j++) {
+      let col = (x + i + cols) % cols;
+      let row = (y + j + rows) % rows;
+      sum += grid[col][row];
     }
   }
+  sum -= grid[x][y];
+  return sum;
+}
+
+function inside(point, vs) {
+  // ray-casting algorithm based on
+  // https://wrf.ecse.rpi.edu/Research/Short_Notes/pnpoly.html/pnpoly.html
+
+  var x = point[0];
+  var y = point[1];
+  var inside = false;
+  for (var i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+    var xi = vs[i].x,
+      yi = vs[i].y;
+    var xj = vs[j].x,
+      yj = vs[j].y;
+
+    var intersect =
+      yi > y != yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
+    if (intersect) inside = !inside;
+  }
+
+  return inside;
 }
 
 function doShowFPS() {
