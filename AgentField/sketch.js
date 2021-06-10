@@ -148,7 +148,7 @@ function setup() {
         totalH + padding,
       ];
 
-      noLoop();
+      // noLoop();
     }
   });
 

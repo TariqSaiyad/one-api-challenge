@@ -123,7 +123,6 @@ function setup() {
   createCanvas(windowWidth, windowHeight);
   background(backCol);
   strokeWeight(0.75);
-  noLoop();
 }
 
 function draw() {
